@@ -1,0 +1,23 @@
+{
+  "folders": [
+	{
+		"path": "C:\\Users\\andrew.swanson\\Desktop\\JS-basics"
+	},
+	{
+		"path": "C:\\Users\\andrew.swanson\\Desktop\\Node Learning"
+	},
+	{
+		"path": "C:\\Users\\andrew.swanson\\Desktop\\react-app"
+	},
+	{
+		"path": "C:\\Users\\andrew.swanson\\Desktop\\counter-app"
+	},
+	{
+		"path": "C:\\Users\\andrew.swanson\\Desktop\\battleship-game"
+	}
+],
+  "settings": {
+    "liveServer.settings.multiRootWorkspaceName": "JS-basics",
+    "editor.formatOnSave": true
+  }
+}
