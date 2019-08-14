@@ -576,7 +576,6 @@ class Board extends Component {
     let spot;
 
     for (let ship of ships) {
-      console.log("ship direction on calculated pick: " + ship.direction)
       if (ship.name === name) {
         do {
           if (this.state.pickedSquares.includes(ship.possibleSquares[ship.direction][0]))
@@ -590,10 +589,8 @@ class Board extends Component {
         }
       }
     }
-       
     this.setState({ships: ships});
-    console.log("calculated pick result: " + spot);
-
+    
     return spot;
   }
 
