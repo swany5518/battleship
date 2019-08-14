@@ -8,6 +8,9 @@ class Board extends Component {
         name: "carrier",
         length: 5,
         squares: [34, 44, 54, 64, 74],
+        possibleSquares: [],
+        direction: null,
+        hitOrigin: null,
         hitSquares: [false, false, false, false, false],
         selected: false,
         sunk: false,
@@ -17,6 +20,9 @@ class Board extends Component {
         name: "battleship",
         length: 4,
         squares: [96, 97, 98, 99],
+        possibleSquares: [],
+        direction: null,
+        hitOrigin: null,
         hitSquares: [false, false, false, false],
         selected: false,
         sunk: false,
@@ -26,6 +32,9 @@ class Board extends Component {
         name: "destroyer",
         length: 3,
         squares: [5, 6, 7],
+        possibleSquares: [],
+        direction: null,
+        hitOrigin: null,
         hitSquares: [false, false, false],
         selected: false,
         sunk: false,
@@ -35,7 +44,10 @@ class Board extends Component {
         name: "submarine",
         length: 3,
         squares: [10, 20, 30],
+        possibleSquares: [],
+        direction: null,
         hitSquares: [false, false, false],
+        hitOrigin: null,
         selected: false,
         sunk: false,
         vertical: true
@@ -44,7 +56,10 @@ class Board extends Component {
         name: "patrol",
         length: 2,
         squares: [49, 59],
+        possibleSquares: [],
+        direction: null,
         hitSquares: [false, false],
+        hitOrigin: null,
         selected: false,
         sunk: false,
         vertical: true
@@ -53,9 +68,11 @@ class Board extends Component {
     pickedSquares: [-1, -1, -1, -1],
     isCpu: false,
     allShipSquares: [],
-    targetingShip: false,
-    shipHitOrigin: null,
-    currentShipShots: 0,
+    
+   
+    hitHistory: [],
+    hitNameHistory: [],
+   
     currentDirection: null,
     targettedShipSunk: false,
     lastShipSunkName: null,
@@ -326,53 +343,68 @@ class Board extends Component {
     }
     if (oldProps.gamePhase === "end" && newProps.gamePhase === "start") {
       this.setState({
-          ships: [
-            {
-              name: "carrier",
-              length: 5,
-              squares: [34, 44, 54, 64, 74],
-              hitSquares: [false, false, false, false, false],
-              selected: false,
-              sunk: false,
-              vertical: true
-            },
-            {
-              name: "battleship",
-              length: 4,
-              squares: [96, 97, 98, 99],
-              hitSquares: [false, false, false, false],
-              selected: false,
-              sunk: false,
-              vertical: false
-            },
-            {
-              name: "destroyer",
-              length: 3,
-              squares: [5, 6, 7],
-              hitSquares: [false, false, false],
-              selected: false,
-              sunk: false,
-              vertical: false
-            },
-            {
-              name: "submarine",
-              length: 3,
-              squares: [10, 20, 30],
-              hitSquares: [false, false, false],
-              selected: false,
-              sunk: false,
-              vertical: true
-            },
-            {
-              name: "patrol",
-              length: 2,
-              squares: [49, 59],
-              hitSquares: [false, false],
-              selected: false,
-              sunk: false,
-              vertical: true
-            }
-          ],
+        ships: [
+          {
+            name: "carrier",
+            length: 5,
+            squares: [34, 44, 54, 64, 74],
+            possibleSquares: [],
+            direction: null,
+            hitOrigin: null,
+            hitSquares: [false, false, false, false, false],
+            selected: false,
+            sunk: false,
+            vertical: true
+          },
+          {
+            name: "battleship",
+            length: 4,
+            squares: [96, 97, 98, 99],
+            possibleSquares: [],
+            direction: null,
+            hitOrigin: null,
+            hitSquares: [false, false, false, false],
+            selected: false,
+            sunk: false,
+            vertical: false
+          },
+          {
+            name: "destroyer",
+            length: 3,
+            squares: [5, 6, 7],
+            possibleSquares: [],
+            direction: null,
+            hitOrigin: null,
+            hitSquares: [false, false, false],
+            selected: false,
+            sunk: false,
+            vertical: false
+          },
+          {
+            name: "submarine",
+            length: 3,
+            squares: [10, 20, 30],
+            possibleSquares: [],
+            direction: null,
+            hitSquares: [false, false, false],
+            hitOrigin: null,
+            selected: false,
+            sunk: false,
+            vertical: true
+          },
+          {
+            name: "patrol",
+            length: 2,
+            squares: [49, 59],
+            possibleSquares: [],
+            direction: null,
+            hitSquares: [false, false],
+            hitOrigin: null,
+            selected: false,
+            sunk: false,
+            vertical: true
+          }
+        ],
           pickedSquares: [-1, -1, -1, -1],
           isCpu: false,
           allShipSquares: [],
@@ -391,8 +423,6 @@ class Board extends Component {
       this.randomizeShips();
     }
   }
-
-  
 
   seeIfSunk = () => {
     const pickedSquares = this.state.pickedSquares;
@@ -436,247 +466,256 @@ class Board extends Component {
     }
   };
 
-  cpuTurn = () => {
-    const pickedSquares = this.state.pickedSquares;
-    const allShipSquares = this.state.allShipSquares;
-    if (!this.state.targetingShip) {
-      let occupied;
-      let rnd;
+  cpuRandomPick = () => {
+    let pickedSquares = this.state.pickedSquares;
+    let occupied;
+    let rnd;
+  
       do {
         occupied = true;
         rnd = Math.floor(Math.random() * 100);
         occupied = pickedSquares.includes(rnd);
       } while (occupied);
 
-      this.handleSquareClick(rnd);
-      if (allShipSquares.includes(rnd)) {
-        this.setState({ targetingShip: true, shipHitOrigin: rnd, currentShipShots: 1 });
-        //console.log("hit!");
+      return rnd;
+  }
+
+  setHitSquares = () => {
+    let pickedSquares = this.state.pickedSquares;
+    let ships = this.state.ships;
+
+    for (let ship of ships) { //sets hitSquares before turn
+      let i = 0;
+      for (let square of ship.squares) {
+        if (pickedSquares.includes(square))
+          ship.hitSquares[i] = true;
+        i++;
       }
-    } else if (this.state.targetingShip) {
-      let currentShipShots = this.state.currentShipShots;
-      let origin = this.state.shipHitOrigin;
-      let nextUp = origin - 10 * currentShipShots;
-      let nextDown = origin + 10 * currentShipShots;
-      let nextLeft = origin - 1 * currentShipShots;
-      let nextRight = origin + 1 * currentShipShots;
-      let spaceUp = nextUp >= 0 && !pickedSquares.includes(nextUp);
-      let spaceDown = nextDown <= 99 && !pickedSquares.includes(nextDown);
-      let spaceLeft = nextLeft % 10 < 9 && nextLeft >= 0 && !pickedSquares.includes(nextLeft);
-      let spaceRight = nextRight % 10 > 0 && nextRight <= 99 && !pickedSquares.includes(nextRight);
-      let lastShotHit = allShipSquares.includes(pickedSquares[pickedSquares.length - 1]);
-      let currentDirection = this.state.currentDirection;
-      //console.log(spaceUp + " " + spaceDown + " " + spaceLeft + " " + spaceRight);
-      //console.log(nextUp + " " + nextDown + " " + nextLeft + " " + nextRight);
-      //console.log("origin hit: " + origin);
-      //console.log("ship shots attempted: " + currentShipShots);
-      if (currentShipShots === 1) {
-        let rnd = Math.floor(Math.random() * 4);
-        //console.log("last shot hit");
-        if (rnd === 0 && spaceUp /*|| (spaceUp && !spaceDown && !spaceLeft && !spaceRight)*/) {
-          //console.log("1");
-          this.handleSquareClick(nextUp);
-          this.setState({ currentDirection: "up" });
-        } else if (rnd === 1 && spaceDown /*|| (spaceDown && !spaceUp && !spaceLeft && !spaceRight)*/) {
-          //console.log("2");
-          this.handleSquareClick(nextDown);
-          this.setState({ currentDirection: "down" });
-        } else if (rnd === 2 && spaceLeft /*|| (spaceLeft && !spaceUp && !spaceDown && !spaceRight)*/) {
-          //console.log("3");
-          this.handleSquareClick(nextLeft);
-          this.setState({ currentDirection: "left" });
-        } else if (rnd === 3 && spaceRight /*|| (spaceRight && !spaceUp && !spaceDown && !spaceLeft)*/) {
-          //console.log("4");
-          this.handleSquareClick(nextRight);
-          this.setState({ currentDirection: "right" });
-        } else if (spaceUp) {
-          //console.log("5");
-          this.handleSquareClick(nextUp);
-          this.setState({ currentDirection: "up" });
-        } else if (spaceLeft) {
-          //console.log("6");
-          this.handleSquareClick(nextLeft);
-          this.setState({ currentDirection: "left" });
-        } else if (spaceDown) {
-          //console.log("7");
-          this.handleSquareClick(nextDown);
-          this.setState({ currentDirection: "down" });
-        } else if (spaceRight) {
-          //console.log("8");
-          this.handleSquareClick(nextRight);
-          this.setState({ currentDirection: "right" });
-        } else {
-          let occupied;
-          let rnd;
-          do {
-            occupied = true;
-            rnd = Math.floor(Math.random() * 100);
-            occupied = pickedSquares.includes(rnd);
-          } while (occupied);
-
-          this.handleSquareClick(rnd);
-          if (allShipSquares.includes(rnd)) this.setState({ targetingShip: true, shipHitOrigin: rnd, currentShipShots: 1 });
-          else this.setState({ targetingShip: false });
-        }
-      } else if (currentShipShots > 1) {
-        if (lastShotHit) {
-          //console.log("last shot hit");
-          let newNextUp = origin - 10;
-          let newNextDown = origin + 10;
-          let newNextLeft = origin - 1;
-          let newNextRight = origin + 1;
-          let newSpaceUp = newNextUp >= 0 && !pickedSquares.includes(newNextUp);
-          let newSpaceDown = newNextDown <= 99 && !pickedSquares.includes(newNextDown);
-          let newSpaceLeft = newNextLeft % 10 < 9 && newNextLeft >= 0 && !pickedSquares.includes(newNextLeft);
-          let newSpaceRight = newNextRight % 10 > 0 && newNextRight <= 99 && !pickedSquares.includes(newNextRight);
-          if (!spaceUp && !spaceDown && !spaceLeft && !spaceRight) {
-            let occupied;
-            let rnd;
-            do {
-              occupied = true;
-              rnd = Math.floor(Math.random() * 100);
-              occupied = pickedSquares.includes(rnd);
-            } while (occupied);
-
-            this.handleSquareClick(rnd);
-            if (allShipSquares.includes(rnd))
-              this.setState({ targetingShip: true, shipHitOrigin: rnd, currentShipShots: 1 });
-            else this.setState({ targetingShip: false });
-          } else if (currentDirection === "up" && spaceUp) {
-            //console.log("9");
-            this.handleSquareClick(nextUp);
-            this.setState({ currentDirection: "up" });
-          } else if (currentDirection === "down" && spaceDown) {
-            //console.log("10");
-            this.handleSquareClick(nextDown);
-            this.setState({ currentDirection: "down" });
-          } else if (currentDirection === "left" && spaceLeft) {
-            //console.log("11");
-            this.handleSquareClick(nextLeft);
-            this.setState({ currentDirection: "left" });
-          } else if (currentDirection === "right" && spaceRight) {
-            //console.log("12");
-            this.handleSquareClick(nextRight);
-            this.setState({ currentDirection: "right" });
-          } else if (newSpaceUp && !newSpaceDown && !newSpaceLeft && !newSpaceRight) {
-            //console.log("13");
-            this.handleSquareClick(newNextUp);
-            this.setState({ currentDirection: "up" });
-          } else if (newSpaceDown && !newSpaceUp && !newSpaceLeft && !newSpaceRight) {
-            //console.log("14");
-            this.handleSquareClick(newNextDown);
-            this.setState({ currentDirection: "down" });
-          } else if (newSpaceLeft && !newSpaceUp && !newSpaceDown && !newSpaceRight) {
-            //console.log("15");
-            this.handleSquareClick(newNextLeft);
-            this.setState({ currentDirection: "left" });
-          } else if (newSpaceRight && !newSpaceUp && !newSpaceDown && !newSpaceRight) {
-            //console.log("16");
-            this.handleSquareClick(newNextRight);
-            this.setState({ currentDirection: "right" });
-          } else if (!spaceLeft && !spaceRight && spaceUp) {
-            //console.log("35");
-            this.handleSquareClick(nextUp);
-            this.setState({ currentDirection: "up" });
-          } else if (!spaceLeft && !spaceRight && spaceDown) {
-            //console.log("36");
-            this.handleSquareClick(nextDown);
-            this.setState({ currentDirection: "Down" });
-          } else if (!spaceDown && !spaceUp && spaceLeft) {
-            //console.log("37");
-            this.handleSquareClick(nextLeft);
-            this.setState({ currentDirection: "left" });
-          } else if (!spaceUp && !spaceDown && spaceRight) {
-            //console.log("38");
-            this.handleSquareClick(nextRight);
-            this.setState({ currentDirection: "right" });
-          } else {
-            //console.log("cpu doesnt know what to do");
-            let occupied;
-            let rnd;
-            do {
-              occupied = true;
-              rnd = Math.floor(Math.random() * 100);
-              occupied = pickedSquares.includes(rnd);
-            } while (occupied);
-
-            this.handleSquareClick(rnd);
-            if (allShipSquares.includes(rnd)) {
-              this.setState({ targetingShip: true, shipHitOrigin: rnd, currentShipShots: 1 });
-              //console.log("hit!");
-            } else this.setState({ targetingShip: false, currentShipShots: 0 });
-          }
-        } else if (!lastShotHit) {
-          //console.log("last shot missed");
-          nextUp = origin - 10;
-          nextDown = origin + 10;
-          nextLeft = origin - 1;
-          nextRight = origin + 1;
-          spaceUp = nextUp >= 0 && !pickedSquares.includes(nextUp);
-          spaceDown = nextDown <= 99 && !pickedSquares.includes(nextDown);
-          spaceLeft = nextLeft % 10 !== 9 && nextLeft >= 0 && !pickedSquares.includes(nextLeft);
-          spaceRight = nextRight % 10 !== 0 && nextRight <= 99 && !pickedSquares.includes(nextRight);
-          //console.log("newNextUp: " + nextUp);
-          //console.log("newNextDown: " + nextDown);
-          //console.log("newNextLeft: " + nextLeft);
-          //console.log("newNextRight: " + nextRight);
-
-          if (currentDirection === "up" && spaceDown) {
-            //console.log("17");
-            this.handleSquareClick(nextDown);
-            this.setState({ currentDirection: "down" });
-          } else if (currentDirection === "down" && spaceUp) {
-            //console.log("18");
-            this.handleSquareClick(nextUp);
-            this.setState({ currentDirection: "up" });
-          } else if (currentDirection === "left" && spaceRight) {
-            //console.log("19");
-            this.handleSquareClick(nextRight);
-            this.setState({ currentDirection: "right" });
-          } else if (currentDirection === "right" && spaceLeft) {
-            //console.log("20");
-            this.handleSquareClick(nextLeft);
-            this.setState({ currentDirection: "left" });
-          } else if (!spaceLeft && !spaceRight && spaceUp) {
-            //console.log("21");
-            this.handleSquareClick(nextUp);
-            this.setState({ currentDirection: "up" });
-          } else if (!spaceLeft && !spaceRight && spaceDown) {
-            //console.log("22");
-            this.handleSquareClick(nextDown);
-            this.setState({ currentDirection: "Down" });
-          } else if (!spaceDown && !spaceUp && spaceLeft) {
-            //console.log("23");
-            this.handleSquareClick(nextLeft);
-            this.setState({ currentDirection: "left" });
-          } else if (!spaceUp && !spaceDown && spaceRight) {
-            //console.log("24");
-            this.handleSquareClick(nextRight);
-            this.setState({ currentDirection: "right" });
-          } else {
-            //console.log("cpu really doesnt know what to do");
-            let occupied;
-            let rnd;
-            do {
-              occupied = true;
-              rnd = Math.floor(Math.random() * 100);
-              occupied = pickedSquares.includes(rnd);
-            } while (occupied);
-
-            this.handleSquareClick(rnd);
-            if (allShipSquares.includes(rnd)) {
-              this.setState({ targetingShip: true, shipHitOrigin: rnd, currentShipShots: 1 });
-              //console.log("hit!");
-            } else this.setState({ targetingShip: false, currentShipShots: 0 });
-          }
-          currentShipShots = 1;
-        }
-      }
-
-      currentShipShots++;
-      this.setState({ currentShipShots: currentShipShots });
     }
-    //this.seeIfSunk();
+    this.setState({ships: ships})
+  }
+
+  setHitOrigins = rnd => {
+    let ships = this.state.ships;
+    
+    for (let ship of ships) 
+      for (let square of ship.squares)
+        if (square === rnd && !ship.hitSquares.includes(true)) 
+          ship.hitOrigin = rnd;
+
+    
+    this.setState({ships: ships})
+  }
+
+  updateHitHistory = rnd => {
+    let hitHistory = this.state.hitHistory;
+    let allShipSquares = this.state.allShipSquares;
+    let hitNameHistory = this.state.hitNameHistory;
+
+    if (allShipSquares.includes(rnd))
+      for (const ship of this.state.ships) {
+        if (ship.squares.includes(rnd)) {
+          hitHistory = hitHistory.concat(true);
+          hitNameHistory = hitNameHistory.concat(ship.name)
+        }
+      }
+    else {
+      hitHistory = hitHistory.concat(false);
+      hitNameHistory = hitNameHistory.concat("none");
+    }
+
+    this.setState({hitHistory: hitHistory, hitNameHistory: hitNameHistory})
+  }
+
+  checkForShipsNotSunk = () => {
+    let ships = this.state.ships;
+
+    for (let ship of ships) {
+      if (ship.hitSquares.includes(true) && ship.hitSquares.includes(false)) {
+        console.log("test-true reached")
+        return true;
+      }
+    }   
+      console.log("test-true not reached")
+      return false;
+  }
+
+  cpuGuessNextPick = name => {
+  
+  for (let ship of this.state.ships) {
+    if (ship.name === name) {
+      let spot;
+      
+      spot = ship.possibleSquares[ship.direction].shift();
+
+      if (!this.state.allShipSquares.includes(spot) || ship.possibleSquares[ship.direction].length === 0) {
+        ship.possibleSquares.shift();
+      }
+
+      this.setState({ships: this.state.ships})
+      console.log("guess next pick result: " + spot);
+      return spot;
+    } 
+  }
+}
+
+  cpuSwitchDirection = (lastShot, twoAgo) => {
+    let nextDirection = twoAgo - lastShot;
+    let ships = this.state.ships;
+    let targetedShip;
+
+    for (let ship of ships)
+      if (ship.squares.includes(twoAgo))
+        targetedShip = ship;
+    
+    return targetedShip.hitOrigin + nextDirection;
+  }
+  
+  cpuCalculatedPick = (name) => {
+    let ships = this.state.ships;
+    let spot;
+
+    for (let ship of ships) {
+      console.log("ship direction on calculated pick: " + ship.direction)
+      if (ship.name === name) {
+        do {
+          if (this.state.pickedSquares.includes(ship.possibleSquares[ship.direction][0]))
+          ship.possibleSquares[ship.direction].shift();
+        } while (this.state.pickedSquares.includes(ship.possibleSquares[ship.direction][0]))
+
+        spot = ship.possibleSquares[ship.direction].shift();
+
+        if (!this.state.allShipSquares.includes(spot) || ship.possibleSquares[ship.direction].length === 0) {
+          ship.possibleSquares.shift();
+        }
+      }
+    }
+       
+    this.setState({ships: ships});
+    console.log("calculated pick result: " + spot);
+
+    return spot;
+  }
+
+  cpuGetpossibleSquares = () => {
+    let ships = this.state.ships;
+    let pickedSquares = this.state.pickedSquares;
+
+    for (let ship of ships) {
+      let hitCount = 0;
+      for (let hit of ship.hitSquares)
+        if (hit)
+          hitCount++;
+
+      if (hitCount === 1 && ship.possibleSquares.length < 1 && ship.possibleSquares) {
+        let origin = ship.hitOrigin;
+        let size = ship.squares.length;
+        let upSquares = [];
+        let downSquares = [];
+        let rightSquares = [];
+        let leftSquares = [];
+        let upContinue = true;
+        let downContinue = true;
+        let rightContinue = true;
+        let leftContinue = true;
+
+        for (let i = 1; i < size; i++) {
+          let up = origin - (10 * i);
+          let down  = origin + (10 * i);
+          let left = origin - i;
+          let right = origin + i;
+
+          if (up >= 0 && !pickedSquares.includes(up) && upContinue) upSquares.push(up);
+          else upContinue = false;
+
+          if (down <= 99 && !pickedSquares.includes(down) && downContinue) downSquares.push(down);
+          else downContinue = false;
+
+          if (origin % 10 > 0 && left % 10 < origin % 10 && !pickedSquares.includes(left) && leftContinue) leftSquares.push(left);
+          else leftContinue = false;
+
+          if (origin % 10 < 9 && right % 10 > origin % 10 && !pickedSquares.includes(right) && rightContinue) rightSquares.push(right);
+          else rightContinue = false;
+        }
+        let rnd = Math.floor(Math.random() * 4);
+
+        if (rnd === 0) {
+          if (upSquares.length > 0) ship.possibleSquares.push(upSquares);
+          if (downSquares.length > 0) ship.possibleSquares.push(downSquares);
+          if (leftSquares.length > 0) ship.possibleSquares.push(leftSquares);
+          if (rightSquares.length > 0) ship.possibleSquares.push(rightSquares);
+        }
+        else if (rnd === 1) {
+          if (downSquares.length > 0) ship.possibleSquares.push(downSquares);
+          if (upSquares.length > 0) ship.possibleSquares.push(upSquares);
+          if (leftSquares.length > 0) ship.possibleSquares.push(leftSquares);
+          if (rightSquares.length > 0) ship.possibleSquares.push(rightSquares);
+        }
+        else if (rnd === 2) {
+          if (leftSquares.length > 0) ship.possibleSquares.push(leftSquares);
+          if (rightSquares.length > 0) ship.possibleSquares.push(rightSquares);
+          if (upSquares.length > 0) ship.possibleSquares.push(upSquares);
+          if (downSquares.length > 0) ship.possibleSquares.push(downSquares);
+        }
+        else if (rnd === 3) {
+          if (rightSquares.length > 0) ship.possibleSquares.push(rightSquares);
+          if (leftSquares.length > 0) ship.possibleSquares.push(leftSquares);
+          if (upSquares.length > 0) ship.possibleSquares.push(upSquares);
+          if (downSquares.length > 0) ship.possibleSquares.push(downSquares);
+        }
+        
+        ship.direction = 0;
+      }
+    }
+    this.setState({ships: ships});
+  }
+
+  cpuFinishTurn = spot => {
+    this.setHitOrigins(spot);
+    this.updateHitHistory(spot);
+    
+    this.handleSquareClick(spot);
+    this.setHitSquares();
+    this.cpuGetpossibleSquares();
+  }
+
+  cpuGetHitCount = name => {
+    let count = 0;
+
+    for (const ship of this.state.ships)
+      for (let hit of ship.hitSquares)
+        count += hit ? 1 : 0;
+
+    return count;
+  }
+
+  cpuTurn = () => {
+    this.cpuGetpossibleSquares();
+    let nextShot;
+
+    if (this.checkForShipsNotSunk()) { 
+      let ships = this.state.ships;
+      let targetedShip;
+      
+      for (let ship of ships) 
+        if (ship.hitSquares.includes(true) && ship.hitSquares.includes(false))
+          targetedShip = ship;
+      
+      let hitCount = this.cpuGetHitCount(targetedShip.name);
+      //console.log("hitcount: " + hitCount);
+
+      if (hitCount === 1) {
+       nextShot = this.cpuGuessNextPick(targetedShip.name);
+       //console.log(nextShot);
+      }
+
+      else nextShot = this.cpuCalculatedPick(targetedShip.name);
+    }
+
+    else nextShot = this.cpuRandomPick(); 
+      
+    console.log("next shot from calculated function: " + nextShot);
+    this.cpuFinishTurn(nextShot);
   };
 
   renderBoard = () => {

@@ -24,6 +24,7 @@ class Game extends Component {
     if (oldState.gamePhase === "prep" && this.state.gamePhase === "game") this.setState({ startOfTurns: true }); //left off here on friday
     if (oldState.startOfTurns && this.state.startOfTurns) this.setState({ startOfTurns: false });
     if (oldState.rightMessageSunk) this.setState({rightMessageSunk: false})
+    if (oldState.gamePhase === "end" && this.state.gamePhase === "start") this.setState({cpuWins: false, userWins: false});
   }
 
   decideMessage = arg => {
@@ -128,7 +129,7 @@ class Game extends Component {
     if (player === "user")
       this.setState({userWins: true, gamePhase: "end"})
     else if (player === "cpu")
-      this.setState({userWins: true, gamePhase: "end"})
+      this.setState({cpuWins: true, gamePhase: "end"})
 
   } 
 
