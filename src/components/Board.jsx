@@ -68,11 +68,8 @@ class Board extends Component {
     pickedSquares: [-1, -1, -1, -1],
     isCpu: false,
     allShipSquares: [],
-    
-   
     hitHistory: [],
     hitNameHistory: [],
-   
     currentDirection: null,
     targettedShipSunk: false,
     lastShipSunkName: null,
@@ -408,9 +405,9 @@ class Board extends Component {
           pickedSquares: [-1, -1, -1, -1],
           isCpu: false,
           allShipSquares: [],
+          hitHistory: [],
+          hitNameHistory: [],
           targetingShip: false,
-          shipHitOrigin: null,
-          currentShipShots: 0,
           currentDirection: null,
           targettedShipSunk: false,
           lastShipSunkName: null,
