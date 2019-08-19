@@ -39,7 +39,8 @@ class Game extends Component {
     else if (!this.state.cpuHitLast && arg === "left") return "cpu missed last";
     else if (this.state.gamePhase === "end") {
       if (this.state.cpuWins && !this.state.userWins) return "you lose!"
-      else if (!this.state.cpuWins && this.state.userWins) return "you win!"
+      else if (!this.state.cpuWins && this.state.userWins || this.state.cpuWins && this.state.userWins) return "you win!"
+     
     }
     else return "no condition in decideMessage met";
   };
