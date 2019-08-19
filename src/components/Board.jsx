@@ -74,11 +74,31 @@ class Board extends Component {
     targettedShipSunk: false,
     lastShipSunkName: null,
     currentTargettedShip: "none",
-    sunkenShipCount: 0,
+    sunkenShipCount: 0
   };
 
   componentDidMount() {
-    if (!this.props.attack) {
+    const mappings = {
+      ArrowRight: "right",
+      ArrowLeft: "left",
+      ArrowUp: "up",
+      ArrowDown: "down",
+      KeyR: "rotate"
+    };
+
+    document.addEventListener("keydown", key => {
+      if (this.props.gamePhase === "prep") {
+        if (mappings[key.code]) {
+          this.moveShip(mappings[key.code]);
+          key.preventDefault();
+        } else if (key.code === "KeyG") {
+          this.randomizeShips();
+          key.preventDefault();
+        }
+      }
+    });
+
+    /*if (!this.props.attack) {
       document.addEventListener("keydown", key => {
         if (key.code === "ArrowLeft" && this.props.gamePhase === "prep") {
           this.moveShip("left");
@@ -99,7 +119,7 @@ class Board extends Component {
           this.randomizeShips();
         }
       });
-    }
+    }*/
   }
 
   generateSequence(shipSize) {
@@ -152,7 +172,7 @@ class Board extends Component {
     }
 
     if (movingShip === null) {
-      console.log("no ship selected");
+      //console.log("no ship selected");
     } else if (direction === "left") {
       //console.log(movingShip.name + " moved left");
       let canMoveLeft = true;
@@ -295,7 +315,7 @@ class Board extends Component {
           this.props.afterTurn();
           this.props.sendTurnInfo(hit, name, false, this.props.attack);
         }
-        
+
         this.setState({ pickedSquares: tempSquares });
       }
     }
@@ -402,18 +422,18 @@ class Board extends Component {
             vertical: true
           }
         ],
-          pickedSquares: [-1, -1, -1, -1],
-          isCpu: false,
-          allShipSquares: [],
-          hitHistory: [],
-          hitNameHistory: [],
-          targetingShip: false,
-          currentDirection: null,
-          targettedShipSunk: false,
-          lastShipSunkName: null,
-          currentTargettedShip: "none",
-          sunkenShipCount: 0,
-      })
+        pickedSquares: [-1, -1, -1, -1],
+        isCpu: false,
+        allShipSquares: [],
+        hitHistory: [],
+        hitNameHistory: [],
+        targetingShip: false,
+        currentDirection: null,
+        targettedShipSunk: false,
+        lastShipSunkName: null,
+        currentTargettedShip: "none",
+        sunkenShipCount: 0
+      });
     }
 
     if (oldProps.gamePhase === "start" && newProps.gamePhase === "prep" && this.props.attack) {
@@ -440,14 +460,12 @@ class Board extends Component {
       for (let square of ship.squares) count += allHitShots.includes(square) ? 1 : 0;
       if (count === ship.length) {
         ship.sunk = true;
-        
-        
+
         if (ship.squares.includes(lastShot)) {
           targetSunk = true;
           name = ship.name;
           sunkShipCount++;
-          if (sunkShipCount === 5)
-            this.props.handleWin();
+          if (sunkShipCount === 5) this.props.handleWin();
         }
       }
 
@@ -455,10 +473,10 @@ class Board extends Component {
         ships: tempShips,
         targettedShipSunk: targetSunk,
         pickedSquares: targetSunk ? newPickedSquares : pickedSquares,
-        sunkenShipCount: sunkShipCount 
+        sunkenShipCount: sunkShipCount
       });
       if (targetSunk) {
-        this.setState({ targetingShip: false, currentShipShots: 0, lastShipSunkName: name});
+        this.setState({ targetingShip: false, currentShipShots: 0, lastShipSunkName: name });
       }
     }
   };
@@ -467,42 +485,39 @@ class Board extends Component {
     let pickedSquares = this.state.pickedSquares;
     let occupied;
     let rnd;
-  
-      do {
-        occupied = true;
-        rnd = Math.floor(Math.random() * 100);
-        occupied = pickedSquares.includes(rnd);
-      } while (occupied);
 
-      return rnd;
-  }
+    do {
+      occupied = true;
+      rnd = Math.floor(Math.random() * 100);
+      occupied = pickedSquares.includes(rnd);
+    } while (occupied);
+
+    return rnd;
+  };
 
   setHitSquares = () => {
     let pickedSquares = this.state.pickedSquares;
     let ships = this.state.ships;
 
-    for (let ship of ships) { //sets hitSquares before turn
+    for (let ship of ships) {
+      //sets hitSquares before turn
       let i = 0;
       for (let square of ship.squares) {
-        if (pickedSquares.includes(square))
-          ship.hitSquares[i] = true;
+        if (pickedSquares.includes(square)) ship.hitSquares[i] = true;
         i++;
       }
     }
-    this.setState({ships: ships})
-  }
+    this.setState({ ships: ships });
+  };
 
   setHitOrigins = rnd => {
     let ships = this.state.ships;
-    
-    for (let ship of ships) 
-      for (let square of ship.squares)
-        if (square === rnd && !ship.hitSquares.includes(true)) 
-          ship.hitOrigin = rnd;
 
-    
-    this.setState({ships: ships})
-  }
+    for (let ship of ships)
+      for (let square of ship.squares) if (square === rnd && !ship.hitSquares.includes(true)) ship.hitOrigin = rnd;
+
+    this.setState({ ships: ships });
+  };
 
   updateHitHistory = rnd => {
     let hitHistory = this.state.hitHistory;
@@ -513,7 +528,7 @@ class Board extends Component {
       for (const ship of this.state.ships) {
         if (ship.squares.includes(rnd)) {
           hitHistory = hitHistory.concat(true);
-          hitNameHistory = hitNameHistory.concat(ship.name)
+          hitNameHistory = hitNameHistory.concat(ship.name);
         }
       }
     else {
@@ -521,54 +536,51 @@ class Board extends Component {
       hitNameHistory = hitNameHistory.concat("none");
     }
 
-    this.setState({hitHistory: hitHistory, hitNameHistory: hitNameHistory})
-  }
+    this.setState({ hitHistory: hitHistory, hitNameHistory: hitNameHistory });
+  };
 
   checkForShipsNotSunk = () => {
     let ships = this.state.ships;
 
     for (let ship of ships) {
       if (ship.hitSquares.includes(true) && ship.hitSquares.includes(false)) {
-        console.log("test-true reached")
+        console.log("test-true reached");
         return true;
       }
-    }   
-      console.log("test-true not reached")
-      return false;
-  }
+    }
+    console.log("test-true not reached");
+    return false;
+  };
 
   cpuGuessNextPick = name => {
-  
-  for (let ship of this.state.ships) {
-    if (ship.name === name) {
-      let spot;
-      
-      spot = ship.possibleSquares[ship.direction].shift();
+    for (let ship of this.state.ships) {
+      if (ship.name === name) {
+        let spot;
 
-      if (!this.state.allShipSquares.includes(spot) || ship.possibleSquares[ship.direction].length === 0) {
-        ship.possibleSquares.shift();
+        spot = ship.possibleSquares[ship.direction].shift();
+
+        if (!this.state.allShipSquares.includes(spot) || ship.possibleSquares[ship.direction].length === 0) {
+          ship.possibleSquares.shift();
+        }
+
+        this.setState({ ships: this.state.ships });
+        console.log("guess next pick result: " + spot);
+        return spot;
       }
-
-      this.setState({ships: this.state.ships})
-      console.log("guess next pick result: " + spot);
-      return spot;
-    } 
-  }
-}
+    }
+  };
 
   cpuSwitchDirection = (lastShot, twoAgo) => {
     let nextDirection = twoAgo - lastShot;
     let ships = this.state.ships;
     let targetedShip;
 
-    for (let ship of ships)
-      if (ship.squares.includes(twoAgo))
-        targetedShip = ship;
-    
+    for (let ship of ships) if (ship.squares.includes(twoAgo)) targetedShip = ship;
+
     return targetedShip.hitOrigin + nextDirection;
-  }
-  
-  cpuCalculatedPick = (name) => {
+  };
+
+  cpuCalculatedPick = name => {
     let ships = this.state.ships;
     let spot;
 
@@ -576,8 +588,8 @@ class Board extends Component {
       if (ship.name === name) {
         do {
           if (this.state.pickedSquares.includes(ship.possibleSquares[ship.direction][0]))
-          ship.possibleSquares[ship.direction].shift();
-        } while (this.state.pickedSquares.includes(ship.possibleSquares[ship.direction][0]))
+            ship.possibleSquares[ship.direction].shift();
+        } while (this.state.pickedSquares.includes(ship.possibleSquares[ship.direction][0]));
 
         spot = ship.possibleSquares[ship.direction].shift();
 
@@ -586,10 +598,10 @@ class Board extends Component {
         }
       }
     }
-    this.setState({ships: ships});
-    
+    this.setState({ ships: ships });
+
     return spot;
-  }
+  };
 
   cpuGetpossibleSquares = () => {
     let ships = this.state.ships;
@@ -597,9 +609,7 @@ class Board extends Component {
 
     for (let ship of ships) {
       let hitCount = 0;
-      for (let hit of ship.hitSquares)
-        if (hit)
-          hitCount++;
+      for (let hit of ship.hitSquares) if (hit) hitCount++;
 
       if (hitCount === 1 && ship.possibleSquares.length < 1 && ship.possibleSquares) {
         let origin = ship.hitOrigin;
@@ -614,8 +624,8 @@ class Board extends Component {
         let leftContinue = true;
 
         for (let i = 1; i < size; i++) {
-          let up = origin - (10 * i);
-          let down  = origin + (10 * i);
+          let up = origin - 10 * i;
+          let down = origin + 10 * i;
           let left = origin - i;
           let right = origin + i;
 
@@ -625,10 +635,12 @@ class Board extends Component {
           if (down <= 99 && !pickedSquares.includes(down) && downContinue) downSquares.push(down);
           else downContinue = false;
 
-          if (origin % 10 > 0 && left % 10 < origin % 10 && !pickedSquares.includes(left) && leftContinue) leftSquares.push(left);
+          if (origin % 10 > 0 && left % 10 < origin % 10 && !pickedSquares.includes(left) && leftContinue)
+            leftSquares.push(left);
           else leftContinue = false;
 
-          if (origin % 10 < 9 && right % 10 > origin % 10 && !pickedSquares.includes(right) && rightContinue) rightSquares.push(right);
+          if (origin % 10 < 9 && right % 10 > origin % 10 && !pickedSquares.includes(right) && rightContinue)
+            rightSquares.push(right);
           else rightContinue = false;
         }
         let rnd = Math.floor(Math.random() * 4);
@@ -638,76 +650,65 @@ class Board extends Component {
           if (downSquares.length > 0) ship.possibleSquares.push(downSquares);
           if (leftSquares.length > 0) ship.possibleSquares.push(leftSquares);
           if (rightSquares.length > 0) ship.possibleSquares.push(rightSquares);
-        }
-        else if (rnd === 1) {
+        } else if (rnd === 1) {
           if (downSquares.length > 0) ship.possibleSquares.push(downSquares);
           if (upSquares.length > 0) ship.possibleSquares.push(upSquares);
           if (leftSquares.length > 0) ship.possibleSquares.push(leftSquares);
           if (rightSquares.length > 0) ship.possibleSquares.push(rightSquares);
-        }
-        else if (rnd === 2) {
+        } else if (rnd === 2) {
           if (leftSquares.length > 0) ship.possibleSquares.push(leftSquares);
           if (rightSquares.length > 0) ship.possibleSquares.push(rightSquares);
           if (upSquares.length > 0) ship.possibleSquares.push(upSquares);
           if (downSquares.length > 0) ship.possibleSquares.push(downSquares);
-        }
-        else if (rnd === 3) {
+        } else if (rnd === 3) {
           if (rightSquares.length > 0) ship.possibleSquares.push(rightSquares);
           if (leftSquares.length > 0) ship.possibleSquares.push(leftSquares);
           if (upSquares.length > 0) ship.possibleSquares.push(upSquares);
           if (downSquares.length > 0) ship.possibleSquares.push(downSquares);
         }
-        
+
         ship.direction = 0;
       }
     }
-    this.setState({ships: ships});
-  }
+    this.setState({ ships: ships });
+  };
 
   cpuFinishTurn = spot => {
     this.setHitOrigins(spot);
     this.updateHitHistory(spot);
-    
+
     this.handleSquareClick(spot);
     this.setHitSquares();
     this.cpuGetpossibleSquares();
-  }
+  };
 
   cpuGetHitCount = name => {
     let count = 0;
 
-    for (const ship of this.state.ships)
-      for (let hit of ship.hitSquares)
-        count += hit ? 1 : 0;
+    for (const ship of this.state.ships) for (let hit of ship.hitSquares) count += hit ? 1 : 0;
 
     return count;
-  }
+  };
 
   cpuTurn = () => {
     this.cpuGetpossibleSquares();
     let nextShot;
 
-    if (this.checkForShipsNotSunk()) { 
+    if (this.checkForShipsNotSunk()) {
       let ships = this.state.ships;
       let targetedShip;
-      
-      for (let ship of ships) 
-        if (ship.hitSquares.includes(true) && ship.hitSquares.includes(false))
-          targetedShip = ship;
-      
+
+      for (let ship of ships) if (ship.hitSquares.includes(true) && ship.hitSquares.includes(false)) targetedShip = ship;
+
       let hitCount = this.cpuGetHitCount(targetedShip.name);
       //console.log("hitcount: " + hitCount);
 
       if (hitCount === 1) {
-       nextShot = this.cpuGuessNextPick(targetedShip.name);
-       //console.log(nextShot);
-      }
+        nextShot = this.cpuGuessNextPick(targetedShip.name);
+        //console.log(nextShot);
+      } else nextShot = this.cpuCalculatedPick(targetedShip.name);
+    } else nextShot = this.cpuRandomPick();
 
-      else nextShot = this.cpuCalculatedPick(targetedShip.name);
-    }
-
-    else nextShot = this.cpuRandomPick(); 
-      
     console.log("next shot from calculated function: " + nextShot);
     this.cpuFinishTurn(nextShot);
   };
