@@ -1,3 +1,5 @@
+Game link: https://ecstatic-curran-81e99a.netlify.app/
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
